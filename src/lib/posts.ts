@@ -8,13 +8,17 @@ export async function getPublishedPosts(opts?: {
   offset?: number
   categorySlug?: string
   subcategorySlug?: string
+  ascending?: boolean
 }): Promise<Post[]> {
-  const { limit = 20, offset = 0, categorySlug, subcategorySlug } = opts ?? {}
+  const { limit = 200, offset = 0, categorySlug, subcategorySlug, ascending } = opts ?? {}
+  // Category/subcategory pages are usually a numbered or ordered series (e.g. "Day 1..N")
+  // meant to be read in publish order; the unfiltered home feed stays newest-first.
+  const sortAscending = ascending ?? Boolean(categorySlug || subcategorySlug)
   let query = supabase
     .from('posts')
     .select(POST_SELECT)
     .eq('status', 'published')
-    .order('published_at', { ascending: false })
+    .order('published_at', { ascending: sortAscending })
     .range(offset, offset + limit - 1)
 
   if (subcategorySlug) {
